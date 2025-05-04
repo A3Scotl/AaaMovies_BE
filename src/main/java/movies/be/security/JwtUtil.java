@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
+
 @Component
 public class JwtUtil {
     private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
@@ -21,10 +22,11 @@ public class JwtUtil {
     @Value("${jwt.reset-password.expiration}")
     private long resetPasswordExpiration;
 
+    /**
+     * Generate a JWT token for the user.
+     */
     public String generateToken(String email, String role) {
-        logger.debug("Generating token for email: {} with role: {}", email, role);
-
-        // Không tự động thêm tiền tố ROLE_ vào token
+        logger.debug("Generating token for email: {}, role: {}", email, role);
         return Jwts.builder()
                 .setSubject(email)
                 .claim("role", role)
@@ -34,37 +36,53 @@ public class JwtUtil {
                 .compact();
     }
 
+    /**
+     * Generate a JWT token for password reset.
+     */
     public String generateResetPasswordToken(String email) {
+        logger.debug("Generating reset password token for email: {}", email);
         return Jwts.builder()
                 .setSubject(email)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + resetPasswordExpiration))
-                .signWith(SignatureAlgorithm.HS512, secret)
+                .signWith(SignatureAlgorithm.HS256, secret)
                 .compact();
     }
 
+    /**
+     * Extract email from the JWT token.
+     */
     public String getEmailFromToken(String token) {
         return getClaims(token).getSubject();
     }
 
+    /**
+     * Extract role from the JWT token.
+     */
     public String getRoleFromToken(String token) {
         return getClaims(token).get("role", String.class);
     }
 
+    /**
+     * Validate the JWT token.
+     */
     public boolean validateToken(String token) {
         try {
             Claims claims = getClaims(token);
-            logger.debug("Token hợp lệ cho email: {}", claims.getSubject());
+            logger.debug("Token validated for email: {}", claims.getSubject());
             return true;
         } catch (ExpiredJwtException ex) {
-            logger.warn("Token đã hết hạn: {}", ex.getMessage());
+            logger.warn("Token expired: {}", ex.getMessage());
             return false;
         } catch (JwtException | IllegalArgumentException e) {
-            logger.error("Token không hợp lệ: {}", e.getMessage());
+            logger.error("Invalid token: {}", e.getMessage());
             return false;
         }
     }
 
+    /**
+     * Helper method to parse claims from the JWT token.
+     */
     private Claims getClaims(String token) {
         return Jwts.parser()
                 .setSigningKey(secret)

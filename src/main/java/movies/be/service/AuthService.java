@@ -8,5 +8,6 @@ public interface AuthService {
     AuthResponse login(LoginRequest request);
     AuthResponse forgotPassword(ForgotPasswordRequest request);
     AuthResponse resetPassword(ResetPasswordRequest request);
+    AuthResponse resendVerificationCode(RegisterRequest request);
 
 }

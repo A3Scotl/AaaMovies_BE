@@ -17,10 +17,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
@@ -31,8 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String authHeader = request.getHeader("Authorization");
             logger.debug("Processing request to {}, Authorization header: {}",
-                    request.getRequestURI(),
-                    authHeader != null ? "present" : "missing");
+                    request.getRequestURI(), authHeader != null ? "present" : "missing");
 
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 logger.debug("No Bearer token found, continuing filter chain");
@@ -47,19 +46,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String email = jwtUtil.getEmailFromToken(token);
                 logger.debug("Token is valid for email: {}", email);
 
-                try {
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-                    logger.debug("User loaded successfully: {}, authorities: {}",
-                            email, userDetails.getAuthorities());
+                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                logger.debug("User loaded: {}, authorities: {}", email, userDetails.getAuthorities());
 
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                    logger.debug("Authentication set in SecurityContext");
-                } catch (Exception e) {
-                    logger.error("Could not set user authentication: {}", e.getMessage());
-                }
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                logger.debug("Authentication set in SecurityContext");
             } else {
                 logger.warn("Token validation failed");
             }
