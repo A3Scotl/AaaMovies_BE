@@ -8,8 +8,10 @@ package movies.be.service.impl;
 import movies.be.dto.*;
 import movies.be.model.Role;
 import movies.be.model.User;
+import movies.be.model.VerificationToken;
 import movies.be.repository.RoleRepository;
 import movies.be.repository.UserRepository;
+import movies.be.repository.VerificationTokenRepository;
 import movies.be.security.JwtUtil;
 import movies.be.service.AuthService;
 import movies.be.service.EmailService;
@@ -17,6 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -26,19 +30,31 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
+import java.util.regex.Pattern;
 
 @Service
+@EnableScheduling
 public class AuthServiceImpl implements AuthService {
     private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
+
+    // Biểu thức chính quy kiểm tra mật khẩu mạnh
+    private static final Pattern PASSWORD_PATTERN = Pattern.compile(
+            "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$"
+    );
+
+    // Giới hạn số lần gửi lại mã (3 lần trong 1 giờ)
+    private static final int MAX_RESEND_COUNT = 3;
+    private static final long RESEND_TIME_WINDOW = 3600000; // 1 giờ (ms)
 
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private VerificationTokenRepository verificationTokenRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -55,10 +71,6 @@ public class AuthServiceImpl implements AuthService {
     @Value("${verification.code.expiration}")
     private long verificationCodeExpiration;
 
-    // Lưu trữ mã xác thực và thời gian tạo
-    private final Map<String, VerificationData> verificationDataMap = new HashMap<>();
-    private final Map<String, RegisterRequest> pendingRegistrations = new HashMap<>();
-
     /**
      * Gửi mã xác thực qua email khi người dùng đăng ký.
      */
@@ -71,14 +83,28 @@ public class AuthServiceImpl implements AuthService {
             return new AuthResponse(null, "Email already exists");
         }
 
+        // Kiểm tra mật khẩu mạnh
+        if (!isPasswordStrong(request.getPassword())) {
+            logger.warn("Weak password for email: {}", request.getEmail());
+            return new AuthResponse(null, "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character");
+        }
+
         // Tạo mã xác thực 6 chữ số
         String verificationCode = String.format("%06d", new Random().nextInt(999999));
-        verificationDataMap.put(request.getEmail(), new VerificationData(verificationCode, System.currentTimeMillis()));
-        pendingRegistrations.put(request.getEmail(), request);
+        LocalDateTime timestamp = LocalDateTime.now();
+        verificationTokenRepository.save(VerificationToken.builder()
+                .email(request.getEmail())
+                .fullName(request.getFullName())
+                .password(passwordEncoder.encode(request.getPassword())) // Mã hóa trước khi lưu
+                .code(verificationCode)
+                .timestamp(timestamp)
+                .resendCount(0)
+                .lastResendTime(timestamp)
+                .build());
 
         // Gửi email
         emailService.sendVerificationEmail(request.getEmail(), verificationCode);
-        logger.info("Verification code sent to: {}", request.getEmail());
+        logger.info("Verification code sent to: {}. Code expires in {} ms", request.getEmail(), verificationCodeExpiration);
 
         return new AuthResponse(null, "Verification code sent to email");
     }
@@ -95,16 +121,30 @@ public class AuthServiceImpl implements AuthService {
             return new AuthResponse(null, "Email already exists");
         }
 
-        if (!pendingRegistrations.containsKey(request.getEmail())) {
+        VerificationToken token = verificationTokenRepository.findByEmail(request.getEmail());
+        if (token == null) {
             logger.warn("No pending registration found for email: {}", request.getEmail());
             return new AuthResponse(null, "No pending registration found");
         }
 
+        LocalDateTime currentTime = LocalDateTime.now();
+        if (currentTime.isBefore(token.getLastResendTime().plusNanos(RESEND_TIME_WINDOW * 1000000))) {
+            if (token.getResendCount() >= MAX_RESEND_COUNT) {
+                logger.warn("Maximum resend attempts reached for email: {}", request.getEmail());
+                return new AuthResponse(null, "Maximum resend attempts reached. Try again later.");
+            }
+        }
+
         // Tạo mã mới
         String verificationCode = String.format("%06d", new Random().nextInt(999999));
-        verificationDataMap.put(request.getEmail(), new VerificationData(verificationCode, System.currentTimeMillis()));
+        token.setCode(verificationCode);
+        token.setTimestamp(LocalDateTime.now());
+        token.setResendCount(token.getResendCount() + 1);
+        token.setLastResendTime(LocalDateTime.now());
+        verificationTokenRepository.save(token);
+
         emailService.sendVerificationEmail(request.getEmail(), verificationCode);
-        logger.info("Verification code resent to: {}", request.getEmail());
+        logger.info("Verification code resent to: {}. Resend count: {}, expires in {} ms", request.getEmail(), token.getResendCount(), verificationCodeExpiration);
 
         return new AuthResponse(null, "Verification code resent to email");
     }
@@ -116,32 +156,22 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse verifyAndRegister(EmailVerificationRequest request) {
         logger.info("Verifying registration for email: {}", request.getEmail());
 
-        VerificationData verificationData = verificationDataMap.get(request.getEmail());
-        if (verificationData == null) {
+        VerificationToken verificationToken = verificationTokenRepository.findByEmail(request.getEmail());
+        if (verificationToken == null) {
             logger.warn("No verification code found for email: {}", request.getEmail());
             return new AuthResponse(null, "No verification code found");
         }
 
-        // Kiểm tra thời gian hết hạn (60 giây)
-        if (System.currentTimeMillis() - verificationData.timestamp > verificationCodeExpiration) {
+        // Kiểm tra thời gian hết hạn
+        if (LocalDateTime.now().isAfter(verificationToken.getTimestamp().plusNanos(verificationCodeExpiration * 1000000))) {
             logger.warn("Verification code expired for email: {}", request.getEmail());
             return new AuthResponse(null, "Verification code expired");
         }
 
-        if (!verificationData.code.equals(request.getVerificationCode())) {
+        if (!verificationToken.getCode().equals(request.getVerificationCode())) {
             logger.warn("Invalid verification code for email: {}", request.getEmail());
             return new AuthResponse(null, "Invalid verification code");
         }
-
-        RegisterRequest registerRequest = pendingRegistrations.get(request.getEmail());
-        if (registerRequest == null) {
-            logger.error("No pending registration found for email: {}", request.getEmail());
-            return new AuthResponse(null, "No pending registration found");
-        }
-
-        // Xóa dữ liệu tạm
-        verificationDataMap.remove(request.getEmail());
-        pendingRegistrations.remove(request.getEmail());
 
         // Tạo tài khoản
         Role userRole = roleRepository.findByName("USER");
@@ -151,14 +181,16 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User user = User.builder()
-                .email(registerRequest.getEmail())
-                .fullName(registerRequest.getFullName())
-                .password(passwordEncoder.encode(registerRequest.getPassword()))
+                .email(request.getEmail())
+                .fullName(verificationToken.getFullName())
+                .password(verificationToken.getPassword()) // Mật khẩu đã được mã hóa trước đó
                 .roles(Collections.singleton(userRole))
                 .createdAt(LocalDateTime.now())
+                .active(true)
                 .build();
 
         userRepository.save(user);
+        verificationTokenRepository.delete(verificationToken);
         logger.info("User registered successfully: {}", user.getEmail());
 
         // Gửi email chào mừng
@@ -184,6 +216,11 @@ public class AuthServiceImpl implements AuthService {
         if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             logger.error("Invalid credentials for: {}", request.getEmail());
             return new AuthResponse(null, "Invalid credentials");
+        }
+
+        if (!user.isActive()) {
+            logger.warn("Account is not active for: {}", request.getEmail());
+            return new AuthResponse(null, "Account is not active");
         }
 
         // Xác thực với AuthenticationManager
@@ -242,6 +279,12 @@ public class AuthServiceImpl implements AuthService {
             return new AuthResponse(null, "User not found");
         }
 
+        // Kiểm tra mật khẩu mạnh
+        if (!isPasswordStrong(request.getPassword())) {
+            logger.warn("Weak password during reset for email: {}", email);
+            return new AuthResponse(null, "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character");
+        }
+
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         userRepository.save(user);
         logger.info("Password reset successful for: {}", email);
@@ -250,15 +293,19 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * Lớp dữ liệu nội bộ để lưu mã xác thực và thời gian tạo.
+     * Dọn dẹp các mã xác thực và đăng ký tạm thời đã hết hạn.
      */
-    private static class VerificationData {
-        private final String code;
-        private final long timestamp;
+    @Scheduled(fixedRate = 60000) // Chạy mỗi 60 giây
+    public void cleanupExpiredData() {
+        LocalDateTime currentTime = LocalDateTime.now();
+        verificationTokenRepository.deleteByTimestampBefore(currentTime.minusNanos(verificationCodeExpiration * 1000000));
+        logger.info("Cleaned up expired verification tokens");
+    }
 
-        public VerificationData(String code, long timestamp) {
-            this.code = code;
-            this.timestamp = timestamp;
-        }
+    /**
+     * Kiểm tra mật khẩu có đủ mạnh không.
+     */
+    private boolean isPasswordStrong(String password) {
+        return PASSWORD_PATTERN.matcher(password).matches();
     }
 }

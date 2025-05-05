@@ -16,5 +16,5 @@ import org.springframework.stereotype.Repository;
  * @version 1.0
  */
 @Repository
-public interface EpisodeRepository extends CrudRepository<Episode, Integer> {
+public interface EpisodeRepository extends CrudRepository<Episode, Long> {
 }

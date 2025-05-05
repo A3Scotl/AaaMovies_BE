@@ -27,6 +27,7 @@ public class MovieDto {
     private Integer releaseYear;
     private boolean isHot;
     private boolean isNew;
+    private boolean isActive;
     private LocalDateTime createdAt;
     private String trailerUrl;
     private List<EpisodeDto> episodes;

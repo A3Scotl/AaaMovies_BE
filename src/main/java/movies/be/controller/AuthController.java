@@ -28,12 +28,6 @@ public class AuthController {
 
     private final AuthService authService;
 
-    /**
-     * Sends a verification code for registration.
-     *
-     * @param request the registration request containing the email
-     * @return ResponseEntity containing the AuthResponse or ApiError
-     */
     @PostMapping("/send-verification")
     public ResponseEntity<?> sendVerificationCode(@Valid @RequestBody RegisterRequest request) {
         logger.info("Received send-verification request for: {}", request.getEmail());
@@ -46,13 +40,6 @@ public class AuthController {
                     .body(new ApiError(HttpStatus.BAD_REQUEST, e.getMessage()));
         }
     }
-
-    /**
-     * Resends a verification code for registration.
-     *
-     * @param request the registration request containing the email
-     * @return ResponseEntity containing the AuthResponse or ApiError
-     */
     @PostMapping("/resend-verification")
     public ResponseEntity<?> resendVerificationCode(@Valid @RequestBody RegisterRequest request) {
         logger.info("Received resend-verification request for: {}", request.getEmail());
@@ -66,12 +53,6 @@ public class AuthController {
         }
     }
 
-    /**
-     * Verifies the code and registers the user.
-     *
-     * @param request the email verification request containing the email and code
-     * @return ResponseEntity containing the AuthResponse or ApiError
-     */
     @PostMapping("/verify-register")
     public ResponseEntity<?> verifyAndRegister(@Valid @RequestBody EmailVerificationRequest request) {
         logger.info("Received verify-register request for: {}", request.getEmail());
@@ -85,12 +66,6 @@ public class AuthController {
         }
     }
 
-    /**
-     * Logs in the user.
-     *
-     * @param request the login request containing the email and password
-     * @return ResponseEntity containing the AuthResponse or ApiError
-     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         logger.info("Received login request for: {}", request.getEmail());
@@ -104,12 +79,6 @@ public class AuthController {
         }
     }
 
-    /**
-     * Initiates the forgot password process.
-     *
-     * @param request the forgot password request containing the email
-     * @return ResponseEntity containing the AuthResponse or ApiError
-     */
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         logger.info("Received forgot-password request for: {}", request.getEmail());
@@ -123,24 +92,12 @@ public class AuthController {
         }
     }
 
-    /**
-     * Handles GET request for reset password (informational).
-     *
-     * @param token the reset password token
-     * @return ResponseEntity containing the AuthResponse
-     */
     @GetMapping("/reset-password")
     public ResponseEntity<AuthResponse> handleGetResetPassword(@RequestParam("token") String token) {
         logger.info("Received GET request for reset-password with token: {}", token);
         return ResponseEntity.ok(new AuthResponse(null, "Please use POST method to reset password with this token."));
     }
 
-    /**
-     * Resets the user's password.
-     *
-     * @param request the reset password request containing the token and new password
-     * @return ResponseEntity containing the AuthResponse or ApiError
-     */
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         logger.info("Received reset-password request");
@@ -154,12 +111,6 @@ public class AuthController {
         }
     }
 
-    /**
-     * Logs out the user and clears the token cookie.
-     *
-     * @param response the HTTP response to clear the cookie
-     * @return ResponseEntity containing the AuthResponse
-     */
     @PostMapping("/logout")
     public ResponseEntity<AuthResponse> logout(HttpServletResponse response) {
         logger.info("Received logout request");

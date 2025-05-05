@@ -41,11 +41,11 @@ public class Movie {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "quality")
-    private Quality quality;
+    private MovieQuality quality;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "lang")
-    private Lang lang;
+    private MovieLang lang;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
@@ -67,6 +67,9 @@ public class Movie {
     @Column(name = "is_new")
     private boolean isNew = false;
 
+    @Column(name = "is_active")
+    private boolean isActive = true;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -86,20 +89,4 @@ public class Movie {
             inverseJoinColumns = @JoinColumn(name = "category_id")
     )
     private List<Category> categories;
-
-    public enum MovieType {
-        SERIES, SINGLE
-    }
-
-    public enum MovieStatus {
-        UPCOMING, ONGOING, COMPLETED
-    }
-
-    public enum Quality {
-        SD, HD
-    }
-
-    public enum Lang {
-        VIETSUB, THUYET_MINH
-    }
 }

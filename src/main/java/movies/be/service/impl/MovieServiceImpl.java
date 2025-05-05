@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,6 +44,7 @@ public class MovieServiceImpl implements MovieService {
         dto.setReleaseYear(movie.getReleaseYear());
         dto.setHot(movie.isHot());
         dto.setNew(movie.isNew());
+        dto.setActive(movie.isActive());
         dto.setCreatedAt(movie.getCreatedAt());
         dto.setTrailerUrl(movie.getTrailerUrl());
         if (movie.getEpisodes() != null) {
@@ -88,12 +88,12 @@ public class MovieServiceImpl implements MovieService {
         movie.setMovieId(dto.getMovieId());
         movie.setTitle(dto.getTitle());
         movie.setOriginName(dto.getOriginName());
-        movie.setType(Movie.MovieType.valueOf(dto.getType()));
+        movie.setType(MovieType.valueOf(dto.getType()));
         movie.setDescription(dto.getDescription());
         movie.setThumbnail(dto.getThumbnail());
-        movie.setQuality(dto.getQuality() != null ? Movie.Quality.valueOf(dto.getQuality()) : null);
-        movie.setLang(dto.getLang() != null ? Movie.Lang.valueOf(dto.getLang()) : null);
-        movie.setStatus(dto.getStatus() != null ? Movie.MovieStatus.valueOf(dto.getStatus()) : null);
+        movie.setQuality(dto.getQuality() != null ? MovieQuality.valueOf(dto.getQuality()) : null);
+        movie.setLang(dto.getLang() != null ? MovieLang.valueOf(dto.getLang()) : null);
+        movie.setStatus(dto.getStatus() != null ? MovieStatus.valueOf(dto.getStatus()) : null);
         movie.setView(dto.getView());
         if (dto.getCountryId() != null) {
             Country country = new Country();
@@ -103,6 +103,7 @@ public class MovieServiceImpl implements MovieService {
         movie.setReleaseYear(dto.getReleaseYear());
         movie.setHot(dto.isHot());
         movie.setNew(dto.isNew());
+        movie.setActive(dto.isActive());
         movie.setCreatedAt(dto.getCreatedAt() != null ? dto.getCreatedAt() : LocalDateTime.now());
         movie.setTrailerUrl(dto.getTrailerUrl() != null ? dto.getTrailerUrl() : "");
         if (dto.getEpisodes() != null) {
@@ -174,8 +175,8 @@ public class MovieServiceImpl implements MovieService {
     }
 
     @Override
-    public MovieDto getMovieById(int id) {
-        return movieRepository.findById( id)
+    public MovieDto getMovieById(Long id) {
+        return movieRepository.findById(id)
                 .map(this::convertToDto)
                 .orElseThrow(() -> new MovieException(String.format(ErrorMessages.MOVIE_NOT_FOUND_MESSAGE, id)));
     }
@@ -188,18 +189,18 @@ public class MovieServiceImpl implements MovieService {
     }
 
     @Override
-    public MovieDto updateMovie(int id, MovieDto movieDto) {
+    public MovieDto updateMovie(Long id, MovieDto movieDto) {
         validateMovieData(movieDto);
-        Movie movie = movieRepository.findById( id)
+        Movie movie = movieRepository.findById(id)
                 .orElseThrow(() -> new MovieException(String.format(ErrorMessages.MOVIE_NOT_FOUND_MESSAGE, id)));
         movie.setTitle(movieDto.getTitle());
         movie.setOriginName(movieDto.getOriginName());
-        movie.setType(Movie.MovieType.valueOf(movieDto.getType()));
+        movie.setType(MovieType.valueOf(movieDto.getType()));
         movie.setDescription(movieDto.getDescription());
         movie.setThumbnail(movieDto.getThumbnail());
-        movie.setQuality(movieDto.getQuality() != null ? Movie.Quality.valueOf(movieDto.getQuality()) : null);
-        movie.setLang(movieDto.getLang() != null ? Movie.Lang.valueOf(movieDto.getLang()) : null);
-        movie.setStatus(movieDto.getStatus() != null ? Movie.MovieStatus.valueOf(movieDto.getStatus()) : null);
+        movie.setQuality(movieDto.getQuality() != null ? MovieQuality.valueOf(movieDto.getQuality()) : null);
+        movie.setLang(movieDto.getLang() != null ? MovieLang.valueOf(movieDto.getLang()) : null);
+        movie.setStatus(movieDto.getStatus() != null ? MovieStatus.valueOf(movieDto.getStatus()) : null);
         movie.setView(movieDto.getView());
         if (movieDto.getCountryId() != null) {
             Country country = new Country();
@@ -209,6 +210,7 @@ public class MovieServiceImpl implements MovieService {
         movie.setReleaseYear(movieDto.getReleaseYear());
         movie.setHot(movieDto.isHot());
         movie.setNew(movieDto.isNew());
+        movie.setActive(movieDto.isActive());
         movie.setTrailerUrl(movieDto.getTrailerUrl() != null ? movieDto.getTrailerUrl() : "");
         movie.getEpisodes().clear();
         movie.getEpisodes().addAll(movieDto.getEpisodes().stream()
@@ -235,16 +237,16 @@ public class MovieServiceImpl implements MovieService {
     }
 
     @Override
-    public void deleteMovie(int id) {
-        if (!movieRepository.existsById( id)) {
+    public void deleteMovie(Long id) {
+        if (!movieRepository.existsById(id)) {
             throw new MovieException(String.format(ErrorMessages.MOVIE_NOT_FOUND_MESSAGE, id));
         }
-        movieRepository.deleteById( id);
+        movieRepository.deleteById(id);
     }
 
     @Override
-    public MovieDto addEpisodeToMovie(int movieId, EpisodeDto episodeDto) {
-        Movie movie = movieRepository.findById( movieId)
+    public MovieDto addEpisodeToMovie(Long movieId, EpisodeDto episodeDto) {
+        Movie movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> new MovieException(String.format(ErrorMessages.MOVIE_NOT_FOUND_MESSAGE, movieId)));
         Episode episode = new Episode();
         episode.setEpisodeNumber(episodeDto.getEpisodeNumber());

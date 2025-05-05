@@ -44,7 +44,7 @@ public class MovieController {
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getMovieById(@PathVariable int id) {
+    public ResponseEntity<?> getMovieById(@PathVariable Long id) {
         logger.info("Received request to fetch movie with ID: {}", id);
         try {
             MovieDto movie = movieService.getMovieById(id);
@@ -76,7 +76,7 @@ public class MovieController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateMovie(@PathVariable int id, @RequestBody MovieDto movieDto) {
+    public ResponseEntity<?> updateMovie(@PathVariable Long id, @RequestBody MovieDto movieDto) {
         logger.info("Received request to update movie with ID: {}", id);
         try {
             MovieDto updatedMovie = movieService.updateMovie(id, movieDto);
@@ -94,7 +94,7 @@ public class MovieController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteMovie(@PathVariable int id) {
+    public ResponseEntity<?> deleteMovie(@PathVariable Long id) {
         logger.info("Received request to delete movie with ID: {}", id);
         try {
             movieService.deleteMovie(id);
@@ -111,7 +111,7 @@ public class MovieController {
         }
     }
     @PostMapping("/{movieId}/episodes")
-    public ResponseEntity<MovieDto> addEpisode(@PathVariable int movieId, @RequestBody EpisodeDto episodeDto) {
+    public ResponseEntity<MovieDto> addEpisode(@PathVariable Long movieId, @RequestBody EpisodeDto episodeDto) {
         MovieDto updatedMovie = movieService.addEpisodeToMovie(movieId, episodeDto);
         return new ResponseEntity<>(updatedMovie, HttpStatus.OK);
     }

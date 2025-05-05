@@ -1,4 +1,4 @@
-package movies.be.security;
+package movies.be.service.impl;
 
 import movies.be.model.Role;
 import movies.be.model.User;
