@@ -1,7 +1,9 @@
 package movies.be.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -68,6 +70,7 @@ public class Movie {
     private boolean isNew = false;
 
     @Column(name = "is_active")
+    @NotNull
     private boolean isActive = true;
 
     @Column(name = "created_at", nullable = false)

@@ -259,4 +259,13 @@ public class MovieServiceImpl implements MovieService {
         movie.getEpisodes().add(episode);
         return convertToDto(movieRepository.save(movie));
     }
+
+    @Override
+    public MovieDto changeActive(Long id, Boolean active) {
+        Movie movie = movieRepository.findById(id)
+                .orElseThrow(() -> new MovieException(String.format(ErrorMessages.MOVIE_NOT_FOUND_MESSAGE, id)));
+        movie.setActive(active);
+        Movie updatedMovie = movieRepository.save(movie);
+        return convertToDto(updatedMovie);
+    }
 }

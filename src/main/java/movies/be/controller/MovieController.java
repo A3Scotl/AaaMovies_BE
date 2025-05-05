@@ -9,6 +9,7 @@ package movies.be.controller;
 import lombok.RequiredArgsConstructor;
 import movies.be.dto.EpisodeDto;
 import movies.be.dto.MovieDto;
+import movies.be.dto.ToggleActiveRequest;
 import movies.be.exception.MovieException;
 import movies.be.service.MovieService;
 import org.slf4j.Logger;
@@ -113,6 +114,11 @@ public class MovieController {
     @PostMapping("/{movieId}/episodes")
     public ResponseEntity<MovieDto> addEpisode(@PathVariable Long movieId, @RequestBody EpisodeDto episodeDto) {
         MovieDto updatedMovie = movieService.addEpisodeToMovie(movieId, episodeDto);
+        return new ResponseEntity<>(updatedMovie, HttpStatus.OK);
+    }
+    @PutMapping("/{id}/toggle-active")
+    public ResponseEntity<MovieDto> toggleActive(@PathVariable Long id, @RequestBody ToggleActiveRequest request) {
+        MovieDto updatedMovie = movieService.changeActive(id, request.getIsActive());
         return new ResponseEntity<>(updatedMovie, HttpStatus.OK);
     }
 }

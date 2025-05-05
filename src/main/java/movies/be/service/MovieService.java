@@ -12,4 +12,5 @@ public interface MovieService {
     MovieDto updateMovie(Long id, MovieDto movieDto);
     void deleteMovie(Long id);
     MovieDto addEpisodeToMovie(Long movieId, EpisodeDto episodeDto);
+    MovieDto changeActive(Long id, Boolean active);
 }
