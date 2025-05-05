@@ -5,10 +5,9 @@ import movies.be.dto.MovieDto;
 import movies.be.exception.ErrorMessages;
 import movies.be.exception.MovieException;
 import movies.be.model.*;
+import movies.be.repository.CategoryRepository;
 import movies.be.repository.MovieRepository;
 import movies.be.service.MovieService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,12 +20,13 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class MovieServiceImpl implements MovieService {
-    private static final Logger logger = LoggerFactory.getLogger(MovieServiceImpl.class);
     private final MovieRepository movieRepository;
+    private final CategoryRepository categoryRepository;
 
     @Autowired
-    public MovieServiceImpl(MovieRepository movieRepository) {
+    public MovieServiceImpl(MovieRepository movieRepository, CategoryRepository categoryRepository) {
         this.movieRepository = movieRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     private MovieDto convertToDto(Movie movie) {
@@ -100,11 +100,6 @@ public class MovieServiceImpl implements MovieService {
             country.setId(dto.getCountryId());
             movie.setCountry(country);
         }
-//        if (dto.getCategoryIds() != null) {
-//            Category category = new Category();
-//            category.setId(dto.getCategoryIds());
-//            movie.setCountry(country);
-//        }
         movie.setReleaseYear(dto.getReleaseYear());
         movie.setHot(dto.isHot());
         movie.setNew(dto.isNew());
@@ -126,6 +121,12 @@ public class MovieServiceImpl implements MovieService {
                     })
                     .collect(Collectors.toList());
             movie.setEpisodes(episodes);
+        }
+        if (dto.getCategoryIds() != null) {
+            List<Category> categories = categoryRepository.findAllById(dto.getCategoryIds())
+                    .stream()
+                    .collect(Collectors.toList());
+            movie.setCategories(categories);
         }
         return movie;
     }
@@ -174,7 +175,7 @@ public class MovieServiceImpl implements MovieService {
 
     @Override
     public MovieDto getMovieById(int id) {
-        return movieRepository.findById(    id)
+        return movieRepository.findById( id)
                 .map(this::convertToDto)
                 .orElseThrow(() -> new MovieException(String.format(ErrorMessages.MOVIE_NOT_FOUND_MESSAGE, id)));
     }
@@ -189,7 +190,7 @@ public class MovieServiceImpl implements MovieService {
     @Override
     public MovieDto updateMovie(int id, MovieDto movieDto) {
         validateMovieData(movieDto);
-        Movie movie = movieRepository.findById(    id)
+        Movie movie = movieRepository.findById( id)
                 .orElseThrow(() -> new MovieException(String.format(ErrorMessages.MOVIE_NOT_FOUND_MESSAGE, id)));
         movie.setTitle(movieDto.getTitle());
         movie.setOriginName(movieDto.getOriginName());
@@ -224,14 +225,36 @@ public class MovieServiceImpl implements MovieService {
                     return episode;
                 })
                 .collect(Collectors.toList()));
+        if (movieDto.getCategoryIds() != null) {
+            List<Category> categories = categoryRepository.findAllById(movieDto.getCategoryIds())
+                    .stream()
+                    .collect(Collectors.toList());
+            movie.setCategories(categories);
+        }
         return convertToDto(movieRepository.save(movie));
     }
 
     @Override
     public void deleteMovie(int id) {
-        if (!movieRepository.existsById(    id)) {
+        if (!movieRepository.existsById( id)) {
             throw new MovieException(String.format(ErrorMessages.MOVIE_NOT_FOUND_MESSAGE, id));
         }
-        movieRepository.deleteById(    id);
+        movieRepository.deleteById( id);
+    }
+
+    @Override
+    public MovieDto addEpisodeToMovie(int movieId, EpisodeDto episodeDto) {
+        Movie movie = movieRepository.findById( movieId)
+                .orElseThrow(() -> new MovieException(String.format(ErrorMessages.MOVIE_NOT_FOUND_MESSAGE, movieId)));
+        Episode episode = new Episode();
+        episode.setEpisodeNumber(episodeDto.getEpisodeNumber());
+        episode.setTitle(episodeDto.getTitle());
+        episode.setThumbnail(episodeDto.getThumbnail());
+        episode.setVideoUrl(episodeDto.getVideoUrl());
+        episode.setDuration(episodeDto.getDuration());
+        episode.setCreatedAt(episodeDto.getCreatedAt() != null ? episodeDto.getCreatedAt() : LocalDateTime.now());
+        episode.setMovie(movie);
+        movie.getEpisodes().add(episode);
+        return convertToDto(movieRepository.save(movie));
     }
 }

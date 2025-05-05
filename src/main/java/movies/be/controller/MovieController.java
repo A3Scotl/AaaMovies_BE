@@ -7,6 +7,7 @@
 package movies.be.controller;
 
 import lombok.RequiredArgsConstructor;
+import movies.be.dto.EpisodeDto;
 import movies.be.dto.MovieDto;
 import movies.be.exception.MovieException;
 import movies.be.service.MovieService;
@@ -27,11 +28,6 @@ public class MovieController {
 
     private final MovieService movieService;
 
-    /**
-     * Retrieves all movies.
-     *
-     * @return ResponseEntity containing a list of MovieDto objects
-     */
     @GetMapping
     public ResponseEntity<List<MovieDto>> getAllMovies() {
         logger.info("Received request to fetch all movies");
@@ -46,12 +42,7 @@ public class MovieController {
         }
     }
 
-    /**
-     * Retrieves a movie by its ID.
-     *
-     * @param id The ID of the movie to retrieve
-     * @return ResponseEntity containing the MovieDto object
-     */
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getMovieById(@PathVariable int id) {
         logger.info("Received request to fetch movie with ID: {}", id);
@@ -70,12 +61,6 @@ public class MovieController {
         }
     }
 
-    /**
-     * Creates a new movie.
-     *
-     * @param movieDto The movie DTO to create
-     * @return ResponseEntity containing the created MovieDto object
-     */
     @PostMapping
     public ResponseEntity<?> createMovie(@RequestBody MovieDto movieDto) {
         logger.info("Received request to create movie: {}", movieDto != null ? movieDto.getTitle() : "null");
@@ -90,13 +75,6 @@ public class MovieController {
         }
     }
 
-    /**
-     * Updates an existing movie.
-     *
-     * @param id The ID of the movie to update
-     * @param movieDto The updated movie DTO
-     * @return ResponseEntity containing the updated MovieDto object
-     */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateMovie(@PathVariable int id, @RequestBody MovieDto movieDto) {
         logger.info("Received request to update movie with ID: {}", id);
@@ -115,12 +93,6 @@ public class MovieController {
         }
     }
 
-    /**
-     * Deletes a movie by its ID.
-     *
-     * @param id The ID of the movie to delete
-     * @return ResponseEntity with no content if successful
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteMovie(@PathVariable int id) {
         logger.info("Received request to delete movie with ID: {}", id);
@@ -137,5 +109,10 @@ public class MovieController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete movie: " + e.getMessage()));
         }
+    }
+    @PostMapping("/{movieId}/episodes")
+    public ResponseEntity<MovieDto> addEpisode(@PathVariable int movieId, @RequestBody EpisodeDto episodeDto) {
+        MovieDto updatedMovie = movieService.addEpisodeToMovie(movieId, episodeDto);
+        return new ResponseEntity<>(updatedMovie, HttpStatus.OK);
     }
 }
