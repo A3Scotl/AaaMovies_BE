@@ -1,23 +1,11 @@
-/*
- * @ (#) Movie.java 1.0 2025-05-05
- *
- * Copyright (c) 2025 IUH. All rights reserved
- */
-
 package movies.be.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Entity class representing a Movie.
- *
- * @author Nguyen Truong An
- * @date 2025-05-05
- * @version 1.0
- */
 @Entity
 @Table(name = "movies", indexes = {
         @Index(name = "idx_type", columnList = "type"),
@@ -38,6 +26,9 @@ public class Movie {
     @Column(name = "title", nullable = false, columnDefinition = "VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
     private String title;
 
+    @Column(name = "origin_name", columnDefinition = "VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+    private String originName;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
     private MovieType type;
@@ -48,11 +39,20 @@ public class Movie {
     @Column(name = "thumbnail", columnDefinition = "VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
     private String thumbnail;
 
-    @Column(name = "video_url", columnDefinition = "VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
-    private String videoUrl;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "quality")
+    private Quality quality;
 
-    @Column(name = "duration") // Thêm trường thời lượng (tính bằng phút)
-    private Integer duration;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "lang")
+    private Lang lang;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private MovieStatus status;
+
+    @Column(name = "view")
+    private Long view;
 
     @ManyToOne
     @JoinColumn(name = "country_id")
@@ -70,6 +70,9 @@ public class Movie {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "trailer_url", columnDefinition = "VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+    private String trailerUrl = "";
+
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Episode> episodes;
 
@@ -85,6 +88,18 @@ public class Movie {
     private List<Category> categories;
 
     public enum MovieType {
-        PHIM_BO, PHIM_LE
+        SERIES, SINGLE
+    }
+
+    public enum MovieStatus {
+        UPCOMING, ONGOING, COMPLETED
+    }
+
+    public enum Quality {
+        SD, HD
+    }
+
+    public enum Lang {
+        VIETSUB, THUYET_MINH
     }
 }
