@@ -1,91 +1,222 @@
-AaaMovies Backend
-A Spring Boot backend for a movie streaming application, featuring JWT authentication, role-based authorization, and a MariaDB database with JPA.
-Features
+# 🎬 Movie Management System
 
-User registration and login with JWT.
-Browse movies (hot, new, series, singles).
-Rate movies (users only).
-Manage movies, episodes, and categories (admin only).
-Optimized database with indexes.
-Automatic data initialization with 10 countries, 10 categories, and 2 sample movies (1 series: Ngôi Trường Xác Sống with 12 episodes, 1 single: Đêm Hung Tàn) on startup if the database is empty.
+## 📌 Giới thiệu
 
-Project Structure
+**AaaMovies_BE Management System** là một ứng dụng web cho phép người dùng:
+- Xem thông tin phim và tập phim.
+- Đăng ký, đăng nhập ,quên mật khẩu và khôi phục mật khẩu.
+- ADMIN có thể quản lý phim, thể loại, quốc gia và người dùng.
+- USER có thể xem phim, tập phim và đánh giá.
 
-movies.be.model: JPA entities (Movie, Episode, Country, Category, Rating).
-movies.be.dto: Data Transfer Objects for API requests/responses.
-movies.be.repository: JPA repositories for database access.
-movies.be.service: Business logic (AuthService, MovieService).
-movies.be.controller: REST controllers (AuthController, MovieController, AdminController).
-movies.be.security: JWT and Spring Security configuration.
-movies.be.config: Configuration for data initialization (DataInitializer).
+---
 
-Prerequisites
+## 🎯 Mục tiêu dự án
 
-Java 17
-MariaDB
-Maven
+- Cung cấp API quản lý phim, tập phim, người dùng.
+- Đảm bảo bảo mật: xác thực và phân quyền.
+- Hỗ trợ tìm kiếm phim theo nhiều tiêu chí: từ khóa, quốc gia, thể loại,...
 
-Database Setup
+---
 
-Create the database with UTF-8 support:
-mysql -u root -p < data.sql
+## 🔧 Công nghệ sử dụng
 
-This creates the movie_db database and tables (countries, categories, movies, episodes, movie_categories, ratings) with utf8mb4_unicode_ci collation to support Vietnamese characters.
+| Thành phần | Công nghệ |
+|------------|-----------|
+| Backend | Spring Boot (Java) |
+| Cơ sở dữ liệu | MariaDB |
+| ORM | Hibernate (Spring Data JPA) |
+| Bảo mật | Spring Security (JWT, @PreAuthorize) |
+| Logging | SLF4J + Logback |
+| Build tool | Maven |
+| Container hóa | Docker |
+| Config | `application.properties` + biến môi trường |
 
-Verify database collation:
-SHOW VARIABLES LIKE 'character_set%';
-SHOW VARIABLES LIKE 'collation%';
+---
 
-Ensure character_set_database is utf8mb4 and collation_database is utf8mb4_unicode_ci.
+## 📚 Danh sách API chính
+
+### 🎥 MovieController (`/api/movies`)
+#### Public API
+- `GET /api/movies`: Lấy danh sách tất cả phim.
+
+- `GET /api/movies/hot`: Lấy danh sách phim nổi bật (is_hot = true).
+
+- `GET /api/movies/new`: Lấy danh sách phim mới (is_new = true).
+
+- `GET /api/movies/series`: Lấy danh sách phim bộ (type = SERIES).
+
+- `GET /api/movies/singles`: Lấy danh sách phim lẻ (type = SINGLE).
+
+- `GET /api/movies/{movieId}/episodes`: Lấy danh sách tập phim của phim với movieId.
+
+- `GET /api/movies/by-country/{countryId}`: Lấy danh sách phim theo quốc gia với countryId.
+
+- `GET /api/movies/by-category/{categoryId}`: Lấy danh sách phim theo thể loại với categoryId.
+
+- `GET /api/movies/search?value={keyword}`: Tìm kiếm phim theo từ khóa.
+
+#### User API (Cần quyền `USER`)
+- `POST:/movies/{movieId}/ratings`: User đánh giá phim
+
+#### Admin API (Cần quyền `ADMIN`) không tính API Cần quyền `USER`
+- `POST`
+- `PUT`
+- `DELETE`
+- `PUT`
 
 
-Application Setup
+### 🔐 AuthController (`/api/auth`)
+- `POST /send-verification`: Gửi mã xác minh.
+- `POST /verify-register`: Xác minh đăng ký.
+- `POST /login`: Đăng nhập.
+- `POST /forgot-password`: Quên mật khẩu.
+- `POST /reset-password`: Đặt lại mật khẩu.
 
-Clone the repository:git clone <repository-url>
-cd AaaMovies_BE
+### 📂 Category, Country, User Controller
+- CRUD + `toggle-active` cho thể loại, quốc gia, người dùng.
 
+---
 
-Configure application.properties with your MariaDB credentials and JWT secret:spring.datasource.url=jdbc:mariadb://localhost:3306/movie_db?createDatabaseIfNotExist=true&characterEncoding=UTF-8&serverTimezone=UTC
-spring.datasource.username=root
-spring.datasource.password=your_password
+## 🚀 Tính năng tương lai
 
+- Danh sách phim yêu thích.
+- Quản lý diễn viên, đạo diễn.
+- Ưu đãi cho người dùng mới.
+- Tích hợp hoàn chỉnh Docker.
 
-Build and run:mvn spring-boot:run
+---
 
+## 📦 Hướng dẫn khởi chạy
 
-On first startup, the application will populate the database with:
-10 countries: Hàn Quốc, Âu Mỹ, Nhật Bản, Trung Quốc, Việt Nam, Thái Lan, Ấn Độ, Pháp, Đức, Úc.
-10 categories: Kinh Dị, Hành Động, Hài Hước, Tình Cảm, Phiêu Lưu, Khoa Học Viễn Tưởng, Tâm Lý, Hoạt Hình, Tài Liệu, Gia Đình.
-2 movies: Ngôi Trường Xác Sống (series, 12 episodes) and Đêm Hung Tàn (single).
+### 1. Cài đặt môi trường
 
+- Java 17+
+- MariaDB (tạo DB `movie_db`)
+- Maven
+- Docker (nếu dùng Docker)
 
+### 2. Cấu hình `application.properties`
 
-API Endpoints
+\`\`\`properties
+spring.datasource.url=${DB_URL}
+spring.datasource.username=${DB_USERNAME}
+spring.datasource.password=${DB_PASSWORD}
+spring.datasource.driver-class-name=org.mariadb.jdbc.Driver
+spring.jpa.hibernate.ddl-auto=update
+spring.sql.init.mode=always
+\`\`\`
 
-POST /api/auth/register: Register a new user.
-POST /api/auth/login: Login and receive JWT.
-GET /api/movies/hot: List hot movies (requires JWT).
-GET /api/movies/new: List new movies (requires JWT).
-GET /api/movies/series: List series (requires JWT).
-GET /api/movies/singles: List single movies (requires JWT).
-GET /api/movies/{movieId}/episodes: List episodes of a movie (requires JWT).
-POST /api/movies/{movieId}/ratings: Add a rating (requires JWT, user role).
-POST /api/admin/movies: Add a new movie (requires JWT, admin role).
-POST /api/admin/movies/{movieId}/episodes: Add an episode (requires JWT, admin role).
+### 3. Thiết lập biến môi trường
 
-Technologies
+\`\`\` IntelliJ IDEA: tạo file application-dev.properties
+DB_URL=jdbc:mariadb://localhost:3306/movie_db?useUnicode=yes&characterEncoding=UTF-8
+DB_USERNAME=root
+DB_PASSWORD=your_password
+\`\`\`
 
-Spring Boot 3.4.5
-Spring Security with JWT
-JPA/Hibernate
-MariaDB
-Lombok
-JJWT 0.12.6
+---
 
-Notes
+## 🐳 Triển khai với Docker
 
-The sample data in DataInitializer.java is hard-coded based on JSON from ophim1.com API (https://ophim1.com/phim/ngoi-truong-xac-song and https://ophim1.com/phim/dem-hung-tan).
-Check ophim1.com's terms of use to ensure compliance when using their API or data.
-To add more movies, update DataInitializer.java with data from ophim1.com API (e.g., https://ophim1.com/danh-sach/phim-moi-cap-nhat?page=1).
-Ensure MariaDB uses utf8mb4_unicode_ci to support Vietnamese characters. Run data.sql before starting the application.
+### Dockerfile
 
+\`\`\`Dockerfile
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+COPY target/movie-management-system-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+\`\`\`
+
+### docker-compose.yml
+
+\`\`\`yaml
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_URL=jdbc:mariadb://db:3306/movie_db?useUnicode=yes&characterEncoding=UTF-8
+      - DB_USERNAME=root
+      - DB_PASSWORD=your_password
+    depends_on:
+      - db
+    networks:
+      - movie-network
+
+  db:
+    image: mariadb:10.5
+    environment:
+      - MYSQL_ROOT_PASSWORD=your_password
+      - MYSQL_DATABASE=movie_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - movie-network
+
+networks:
+  movie-network:
+    driver: bridge
+
+volumes:
+  db-data:
+\`\`\`
+
+### Chạy ứng dụng
+
+\`\`\`bash
+mvn clean package
+docker-compose up --build
+\`\`\`
+
+---
+
+## 🧪 Hướng dẫn test API
+
+Sử dụng Postman hoặc Swagger (`/swagger-ui.html` nếu có).
+
+### Ví dụ đăng ký
+
+\`\`\`http
+POST /api/auth/send-verification
+{
+  "email": "newuser@example.com",
+  "fullName": "Người Dùng Mới",
+  "password": "password123"
+}
+\`\`\`
+
+---
+
+## 📁 Dữ liệu mẫu (`data.sql`)
+
+- Đặt trong `src/main/resources`
+- Run Script vào database
+- Gồm: countries, categories, movies, episodes, roles, users...
+
+---
+
+## 👤 Tài khoản mẫu
+
+| Email | Mật khẩu (mã hóa) | Vai trò |
+|-------|-------------------|---------|
+| `admin@gmail.com` | 'admin' | ADMIN |
+| `user1@example.com` | '123456@An'| USER |
+
+---
+## Nguồn phim : ophim17.cc
+---
+
+## 📬 Liên hệ
+
+> Dự án được phát triển cho mục đích học tập. 
+
+---
+
+**Chúc bạn sử dụng vui vẻ 🎉**
