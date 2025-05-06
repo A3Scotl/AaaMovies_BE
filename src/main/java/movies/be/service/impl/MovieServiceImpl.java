@@ -2,11 +2,13 @@ package movies.be.service.impl;
 
 import movies.be.dto.EpisodeDto;
 import movies.be.dto.MovieDto;
+import movies.be.dto.RatingDto;
 import movies.be.exception.ErrorMessages;
 import movies.be.exception.MovieException;
 import movies.be.model.*;
 import movies.be.repository.CategoryRepository;
 import movies.be.repository.MovieRepository;
+import movies.be.repository.UserRepository;
 import movies.be.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -22,11 +24,13 @@ import java.util.stream.Collectors;
 public class MovieServiceImpl implements MovieService {
     private final MovieRepository movieRepository;
     private final CategoryRepository categoryRepository;
+    private final UserRepository userRepository;
 
     @Autowired
-    public MovieServiceImpl(MovieRepository movieRepository, CategoryRepository categoryRepository) {
+    public MovieServiceImpl(MovieRepository movieRepository, CategoryRepository categoryRepository, UserRepository userRepository) {
         this.movieRepository = movieRepository;
         this.categoryRepository = categoryRepository;
+        this.userRepository = userRepository;
     }
 
     private MovieDto convertToDto(Movie movie) {
@@ -339,6 +343,57 @@ public class MovieServiceImpl implements MovieService {
     public List<MovieDto> searchMovies(String query) {
         return movieRepository.searchMovies(query).stream()
                 .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    private RatingDto convertToRatingDto(Rating rating) {
+        RatingDto dto = new RatingDto();
+        dto.setRatingId(rating.getRatingId());
+        dto.setMovieId(rating.getMovie().getMovieId());
+        dto.setUserId(rating.getUser().getId());
+        dto.setRatingValue(rating.getRatingValue());
+        dto.setComment(rating.getComment());
+        dto.setCreatedAt(rating.getCreatedAt());
+        return dto;
+    }
+    private void validateRatingData(RatingDto ratingDto, Long movieId) {
+        if (ratingDto == null || ratingDto.getUserId() == null || ratingDto.getRatingValue() == null) {
+            throw new MovieException("Rating data is invalid");
+        }
+        if (ratingDto.getRatingValue() < 0 || ratingDto.getRatingValue() > 10) {
+            throw new MovieException("Rating value must be between 0 and 10");
+        }
+        if (movieRepository.findById(movieId).isEmpty()) {
+            throw new MovieException(String.format(ErrorMessages.MOVIE_NOT_FOUND_MESSAGE, movieId));
+        }
+        if (userRepository.findById(ratingDto.getUserId()).isEmpty()) {
+            throw new MovieException("User not found");
+        }
+    }
+    @Override
+    public RatingDto addRating(Long movieId, RatingDto ratingDto) {
+        validateRatingData(ratingDto, movieId);
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new MovieException(String.format(ErrorMessages.MOVIE_NOT_FOUND_MESSAGE, movieId)));
+        User user = userRepository.findById(ratingDto.getUserId())
+                .orElseThrow(() -> new MovieException("User not found"));
+        Rating rating = Rating.builder()
+                .movie(movie)
+                .user(user)
+                .ratingValue(ratingDto.getRatingValue())
+                .comment(ratingDto.getComment())
+                .createdAt(ratingDto.getCreatedAt() != null ? ratingDto.getCreatedAt() : LocalDateTime.now())
+                .build();
+        movie.getRatings().add(rating);
+        movieRepository.save(movie);
+        return convertToRatingDto(rating);
+    }
+    @Override
+    public List<RatingDto> getRatingsByMovieId(Long movieId) {
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new MovieException(String.format(ErrorMessages.MOVIE_NOT_FOUND_MESSAGE, movieId)));
+        return movie.getRatings().stream()
+                .map(this::convertToRatingDto)
                 .collect(Collectors.toList());
     }
 }

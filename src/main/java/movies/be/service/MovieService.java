@@ -2,6 +2,7 @@ package movies.be.service;
 
 import movies.be.dto.EpisodeDto;
 import movies.be.dto.MovieDto;
+import movies.be.dto.RatingDto;
 
 import java.util.List;
 
@@ -23,4 +24,6 @@ public interface MovieService {
     List<MovieDto> getMoviesByCountry(Long countryId);
     List<MovieDto> getMoviesByCategory(Long categoryId);
     List<MovieDto> searchMovies(String query);
+    RatingDto addRating(Long movieId, RatingDto ratingDto);
+    List<RatingDto> getRatingsByMovieId(Long movieId);
 }

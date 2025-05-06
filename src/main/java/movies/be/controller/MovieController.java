@@ -3,6 +3,7 @@ package movies.be.controller;
 import lombok.RequiredArgsConstructor;
 import movies.be.dto.EpisodeDto;
 import movies.be.dto.MovieDto;
+import movies.be.dto.RatingDto;
 import movies.be.dto.ToggleActiveRequest;
 import movies.be.service.MovieService;
 import org.slf4j.Logger;
@@ -99,7 +100,12 @@ public class MovieController {
         List<MovieDto> movies = movieService.searchMovies(value);
         return ResponseEntity.ok(movies);
     }
-
+    @GetMapping("/{movieId}/ratings")
+    public ResponseEntity<List<RatingDto>> getRatingsByMovieId(@PathVariable Long movieId) {
+        logger.info("Received request to fetch ratings for movie ID: {}", movieId);
+        List<RatingDto> ratings = movieService.getRatingsByMovieId(movieId);
+        return ResponseEntity.ok(ratings);
+    }
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<MovieDto> createMovie(@RequestBody MovieDto movieDto) {
@@ -138,5 +144,12 @@ public class MovieController {
         logger.info("Received request to toggle active status for movie with ID: {}", id);
         MovieDto updatedMovie = movieService.changeActive(id, request.getIsActive());
         return ResponseEntity.ok(updatedMovie);
+    }
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping("/{movieId}/ratings")
+    public ResponseEntity<RatingDto> addRating(@PathVariable Long movieId, @RequestBody RatingDto ratingDto) {
+        logger.info("Received request to add rating for movie ID: {}", movieId);
+        RatingDto createdRating = movieService.addRating(movieId, ratingDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdRating);
     }
 }
