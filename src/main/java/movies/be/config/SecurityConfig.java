@@ -35,6 +35,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/movies/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers("/api/categories/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/countries/**").permitAll()
+                        .requestMatchers("/api/countries/**").hasRole("ADMIN")
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

@@ -26,4 +26,9 @@ public final class ErrorMessages {
     public static final String CATEGORY_NOT_FOUND_MESSAGE = "Category with ID %d not found";
     public static final String INVALID_CATEGORY_DATA_MESSAGE = "Invalid category data: name cannot be empty";
     public static final String CATEGORY_ALREADY_EXISTS_MESSAGE = "Category with name %s already exists";
+
+    //Country-related error mess
+    public static final String COUNTRY_NOT_FOUND_MESSAGE = "Country with ID %d not found";
+    public static final String INVALID_COUNTRY_DATA_MESSAGE = "Invalid country data: name cannot be empty";
+    public static final String COUNTRY_ALREADY_EXISTS_MESSAGE = "Country with name %s already exists";
 }
