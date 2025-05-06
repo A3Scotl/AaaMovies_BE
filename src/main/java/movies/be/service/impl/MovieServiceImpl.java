@@ -9,6 +9,7 @@ import movies.be.repository.CategoryRepository;
 import movies.be.repository.MovieRepository;
 import movies.be.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -267,5 +268,77 @@ public class MovieServiceImpl implements MovieService {
         movie.setActive(active);
         Movie updatedMovie = movieRepository.save(movie);
         return convertToDto(updatedMovie);
+    }
+
+    @Override
+    public List<MovieDto> getHotMovies() {
+        return movieRepository.findByIsHotTrue().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MovieDto> getNewMovies() {
+        return movieRepository.findByIsNewTrue().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MovieDto> getSeriesMovies() {
+        return movieRepository.findByType(MovieType.SERIES).stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MovieDto> getSingleMovies() {
+        return movieRepository.findByType(MovieType.SINGLE).stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EpisodeDto> getEpisodesByMovieId(Long movieId) {
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new MovieException(String.format(ErrorMessages.MOVIE_NOT_FOUND_MESSAGE, movieId)));
+        return movie.getEpisodes().stream()
+                .map(this::convertEpisodeToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MovieDto> getTopRatedMovies() {
+        return movieRepository.findTopRatedMovies(PageRequest.of(0, 10)).getContent().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MovieDto> getPopularMovies() {
+        return movieRepository.findAllByOrderByViewDesc(PageRequest.of(0, 10)).getContent().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MovieDto> getMoviesByCountry(Long countryId) {
+        return movieRepository.findByCountryId(countryId).stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MovieDto> getMoviesByCategory(Long categoryId) {
+        return movieRepository.findByCategoryId(categoryId).stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MovieDto> searchMovies(String query) {
+        return movieRepository.searchMovies(query).stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
     }
 }

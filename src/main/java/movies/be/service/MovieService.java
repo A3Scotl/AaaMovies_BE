@@ -13,4 +13,14 @@ public interface MovieService {
     void deleteMovie(Long id);
     MovieDto addEpisodeToMovie(Long movieId, EpisodeDto episodeDto);
     MovieDto changeActive(Long id, Boolean active);
+    List<MovieDto> getHotMovies();
+    List<MovieDto> getNewMovies();
+    List<MovieDto> getSeriesMovies();
+    List<MovieDto> getSingleMovies();
+    List<EpisodeDto> getEpisodesByMovieId(Long movieId);
+    List<MovieDto> getTopRatedMovies();
+    List<MovieDto> getPopularMovies();
+    List<MovieDto> getMoviesByCountry(Long countryId);
+    List<MovieDto> getMoviesByCategory(Long categoryId);
+    List<MovieDto> searchMovies(String query);
 }
