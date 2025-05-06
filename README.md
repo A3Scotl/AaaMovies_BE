@@ -54,9 +54,11 @@
 - `GET /api/movies/by-category/{categoryId}`: Lấy danh sách phim theo thể loại với categoryId.
 
 - `GET /api/movies/search?value={keyword}`: Tìm kiếm phim theo từ khóa.
+  
+- `GET /movies/{movieId}/ratings`: Lấy những đánh giá theo phim
 
 #### User API (Cần quyền `USER`)
-- `POST:/movies/{movieId}/ratings`: User đánh giá phim
+- `POST /movies/{movieId}/ratings`: User đánh giá phim
 
 #### Admin API (Cần quyền `ADMIN`) không tính API Cần quyền `USER`
 - `POST`
