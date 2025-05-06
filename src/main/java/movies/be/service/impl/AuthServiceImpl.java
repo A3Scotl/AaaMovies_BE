@@ -25,6 +25,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -213,6 +214,8 @@ public class AuthServiceImpl implements AuthService {
         logger.info("Login attempt for: {}", request.getEmail());
 
         User user = userRepository.findByEmail(request.getEmail().toLowerCase());
+        logger.error("user: {}", user);
+        logger.error("admin: {}", new BCryptPasswordEncoder().encode("admin"));
         if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             logger.error("Invalid credentials for: {}", request.getEmail());
             return new AuthResponse(null, "Invalid credentials");

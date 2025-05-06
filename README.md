@@ -28,7 +28,7 @@ Maven
 Database Setup
 
 Create the database with UTF-8 support:
-mysql -u root -p < init_database.sql
+mysql -u root -p < data.sql
 
 This creates the movie_db database and tables (countries, categories, movies, episodes, movie_categories, ratings) with utf8mb4_unicode_ci collation to support Vietnamese characters.
 
@@ -87,5 +87,5 @@ Notes
 The sample data in DataInitializer.java is hard-coded based on JSON from ophim1.com API (https://ophim1.com/phim/ngoi-truong-xac-song and https://ophim1.com/phim/dem-hung-tan).
 Check ophim1.com's terms of use to ensure compliance when using their API or data.
 To add more movies, update DataInitializer.java with data from ophim1.com API (e.g., https://ophim1.com/danh-sach/phim-moi-cap-nhat?page=1).
-Ensure MariaDB uses utf8mb4_unicode_ci to support Vietnamese characters. Run init_database.sql before starting the application.
+Ensure MariaDB uses utf8mb4_unicode_ci to support Vietnamese characters. Run data.sql before starting the application.
 
