@@ -37,6 +37,12 @@ public class MovieController {
         List<MovieDto> movies = movieService.getHotMovies();
         return ResponseEntity.ok(movies);
     }
+    @GetMapping("/{id}")
+    public ResponseEntity<MovieDto> getMovieById(@PathVariable("id") Long id) {
+        logger.info("Received request to fetch movie by id");
+        MovieDto movies = movieService.getMovieById(id);
+        return ResponseEntity.ok(movies);
+    }
 
     @GetMapping("/new")
     public ResponseEntity<List<MovieDto>> getNewMovies() {
