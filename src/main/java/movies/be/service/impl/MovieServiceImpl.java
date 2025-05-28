@@ -45,6 +45,7 @@ public class MovieServiceImpl implements MovieService {
         dto.setType(movie.getType().toString());
         dto.setDescription(movie.getDescription());
         dto.setThumbnail(movie.getThumbnail());
+        dto.setPoster(movie.getPoster());
         dto.setQuality(movie.getQuality() != null ? movie.getQuality().toString() : null);
         dto.setLang(movie.getLang() != null ? movie.getLang().toString() : null);
         dto.setStatus(movie.getStatus() != null ? movie.getStatus().toString() : null);
@@ -100,6 +101,7 @@ public class MovieServiceImpl implements MovieService {
         movie.setType(MovieType.valueOf(dto.getType()));
         movie.setDescription(dto.getDescription());
         movie.setThumbnail(dto.getThumbnail());
+        movie.setPoster(dto.getPoster());
         movie.setQuality(dto.getQuality() != null ? MovieQuality.valueOf(dto.getQuality()) : null);
         movie.setLang(dto.getLang() != null ? MovieLang.valueOf(dto.getLang()) : null);
         movie.setStatus(dto.getStatus() != null ? MovieStatus.valueOf(dto.getStatus()) : null);
@@ -215,6 +217,7 @@ public class MovieServiceImpl implements MovieService {
         movie.setType(MovieType.valueOf(movieDto.getType()));
         movie.setDescription(movieDto.getDescription());
         movie.setThumbnail(movieDto.getThumbnail());
+        movie.setPoster(movieDto.getPoster());
         movie.setQuality(movieDto.getQuality() != null ? MovieQuality.valueOf(movieDto.getQuality()) : null);
         movie.setLang(movieDto.getLang() != null ? MovieLang.valueOf(movieDto.getLang()) : null);
         movie.setStatus(movieDto.getStatus() != null ? MovieStatus.valueOf(movieDto.getStatus()) : null);

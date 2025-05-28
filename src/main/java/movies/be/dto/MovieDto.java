@@ -19,6 +19,7 @@ public class MovieDto {
     private String type;
     private String description;
     private String thumbnail;
+    private String poster;
     private String quality;
     private String lang;
     private String status;
