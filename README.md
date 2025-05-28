@@ -23,7 +23,7 @@
 | Thành phần | Công nghệ |
 |------------|-----------|
 | Backend | Spring Boot (Java) |
-| Cơ sở dữ liệu | MariaDB |
+| Cơ sở dữ liệu | MySQL |
 | ORM | Hibernate (Spring Data JPA) |
 | Bảo mật | Spring Security (JWT, @PreAuthorize) |
 | Logging | SLF4J + Logback |
