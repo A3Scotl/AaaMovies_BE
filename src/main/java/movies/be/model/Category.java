@@ -3,6 +3,8 @@ package movies.be.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "categories")
 @Data
@@ -18,4 +20,7 @@ public class Category {
     private String name;
 
     private boolean active;
+
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieCategory> movieCategories;
 }

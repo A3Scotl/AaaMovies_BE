@@ -85,7 +85,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // Kiểm tra mật khẩu mạnh
-        if (!isPasswordStrong(request.getPassword())) {
+        if (!isPasswordStrong(request.getPassWord())) {
             logger.warn("Weak password for email: {}", request.getEmail());
             return new AuthResponse(null, "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character");
         }
@@ -96,7 +96,7 @@ public class AuthServiceImpl implements AuthService {
         verificationTokenRepository.save(VerificationToken.builder()
                 .email(request.getEmail())
                 .fullName(request.getFullName())
-                .password(passwordEncoder.encode(request.getPassword())) // Mã hóa trước khi lưu
+                .password(passwordEncoder.encode(request.getPassWord())) // Mã hóa trước khi lưu
                 .code(verificationCode)
                 .timestamp(timestamp)
                 .resendCount(0)
@@ -216,7 +216,7 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(request.getEmail().toLowerCase());
         logger.error("user: {}", user);
         logger.error("admin: {}", new BCryptPasswordEncoder().encode("admin"));
-        if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+        if (user == null || !passwordEncoder.matches(request.getPassWord(), user.getPassword())) {
             logger.error("Invalid credentials for: {}", request.getEmail());
             return new AuthResponse(null, "Invalid credentials");
         }
@@ -229,7 +229,7 @@ public class AuthServiceImpl implements AuthService {
         // Xác thực với AuthenticationManager
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail().toLowerCase(), request.getPassword()));
+                    new UsernamePasswordAuthenticationToken(request.getEmail().toLowerCase(), request.getPassWord()));
             SecurityContextHolder.getContext().setAuthentication(authentication);
         } catch (Exception e) {
             logger.warn("Authentication failed but continuing: {}", e.getMessage());
@@ -283,12 +283,12 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // Kiểm tra mật khẩu mạnh
-        if (!isPasswordStrong(request.getPassword())) {
+        if (!isPasswordStrong(request.getPassWord())) {
             logger.warn("Weak password during reset for email: {}", email);
             return new AuthResponse(null, "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character");
         }
 
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPassword(passwordEncoder.encode(request.getPassWord()));
         userRepository.save(user);
         logger.info("Password reset successful for: {}", email);
 

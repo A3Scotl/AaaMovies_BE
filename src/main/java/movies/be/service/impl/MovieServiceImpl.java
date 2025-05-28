@@ -7,6 +7,7 @@ import movies.be.exception.ErrorMessages;
 import movies.be.exception.MovieException;
 import movies.be.model.*;
 import movies.be.repository.CategoryRepository;
+import movies.be.repository.MovieCategoryRepository;
 import movies.be.repository.MovieRepository;
 import movies.be.repository.UserRepository;
 import movies.be.service.MovieService;
@@ -24,12 +25,15 @@ import java.util.stream.Collectors;
 public class MovieServiceImpl implements MovieService {
     private final MovieRepository movieRepository;
     private final CategoryRepository categoryRepository;
+    private final MovieCategoryRepository movieCategoryRepository;
     private final UserRepository userRepository;
 
     @Autowired
-    public MovieServiceImpl(MovieRepository movieRepository, CategoryRepository categoryRepository, UserRepository userRepository) {
+    public MovieServiceImpl(MovieRepository movieRepository, CategoryRepository categoryRepository,
+                            MovieCategoryRepository movieCategoryRepository, UserRepository userRepository) {
         this.movieRepository = movieRepository;
         this.categoryRepository = categoryRepository;
+        this.movieCategoryRepository = movieCategoryRepository;
         this.userRepository = userRepository;
     }
 
@@ -68,9 +72,9 @@ public class MovieServiceImpl implements MovieService {
         } else {
             dto.setAverageRating(0.0);
         }
-        if (movie.getCategories() != null) {
-            dto.setCategoryIds(movie.getCategories().stream()
-                    .map(Category::getId)
+        if (movie.getMovieCategories() != null) {
+            dto.setCategoryIds(movie.getMovieCategories().stream()
+                    .map(movieCategory -> movieCategory.getCategory().getId())
                     .collect(Collectors.toList()));
         }
         return dto;
@@ -128,12 +132,6 @@ public class MovieServiceImpl implements MovieService {
                     .collect(Collectors.toList());
             movie.setEpisodes(episodes);
         }
-        if (dto.getCategoryIds() != null) {
-            List<Category> categories = categoryRepository.findAllById(dto.getCategoryIds())
-                    .stream()
-                    .collect(Collectors.toList());
-            movie.setCategories(categories);
-        }
         return movie;
     }
 
@@ -190,7 +188,21 @@ public class MovieServiceImpl implements MovieService {
     public MovieDto createMovie(MovieDto movieDto) {
         validateMovieData(movieDto);
         Movie movie = convertToEntity(movieDto);
-        return convertToDto(movieRepository.save(movie));
+        Movie savedMovie = movieRepository.save(movie);
+        if (movieDto.getCategoryIds() != null) {
+            List<MovieCategory> movieCategories = movieDto.getCategoryIds().stream()
+                    .map(categoryId -> {
+                        Category category = categoryRepository.findById(categoryId)
+                                .orElseThrow(() -> new MovieException("Category not found with id: " + categoryId));
+                        return MovieCategory.builder()
+                                .movie(savedMovie)
+                                .category(category)
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+            movieCategoryRepository.saveAll(movieCategories);
+        }
+        return convertToDto(savedMovie);
     }
 
     @Override
@@ -232,11 +244,19 @@ public class MovieServiceImpl implements MovieService {
                     return episode;
                 })
                 .collect(Collectors.toList()));
+        movie.getMovieCategories().clear();
         if (movieDto.getCategoryIds() != null) {
-            List<Category> categories = categoryRepository.findAllById(movieDto.getCategoryIds())
-                    .stream()
+            List<MovieCategory> movieCategories = movieDto.getCategoryIds().stream()
+                    .map(categoryId -> {
+                        Category category = categoryRepository.findById(categoryId)
+                                .orElseThrow(() -> new MovieException("Category not found with id: " + categoryId));
+                        return MovieCategory.builder()
+                                .movie(movie)
+                                .category(category)
+                                .build();
+                    })
                     .collect(Collectors.toList());
-            movie.setCategories(categories);
+            movie.getMovieCategories().addAll(movieCategories);
         }
         return convertToDto(movieRepository.save(movie));
     }
@@ -334,8 +354,8 @@ public class MovieServiceImpl implements MovieService {
 
     @Override
     public List<MovieDto> getMoviesByCategory(Long categoryId) {
-        return movieRepository.findByCategoryId(categoryId).stream()
-                .map(this::convertToDto)
+        return movieCategoryRepository.findByCategoryId(categoryId).stream()
+                .map(movieCategory -> convertToDto(movieCategory.getMovie()))
                 .collect(Collectors.toList());
     }
 
@@ -356,6 +376,7 @@ public class MovieServiceImpl implements MovieService {
         dto.setCreatedAt(rating.getCreatedAt());
         return dto;
     }
+
     private void validateRatingData(RatingDto ratingDto, Long movieId) {
         if (ratingDto == null || ratingDto.getUserId() == null || ratingDto.getRatingValue() == null) {
             throw new MovieException("Rating data is invalid");
@@ -370,6 +391,7 @@ public class MovieServiceImpl implements MovieService {
             throw new MovieException("User not found");
         }
     }
+
     @Override
     public RatingDto addRating(Long movieId, RatingDto ratingDto) {
         validateRatingData(ratingDto, movieId);
@@ -388,6 +410,7 @@ public class MovieServiceImpl implements MovieService {
         movieRepository.save(movie);
         return convertToRatingDto(rating);
     }
+
     @Override
     public List<RatingDto> getRatingsByMovieId(Long movieId) {
         Movie movie = movieRepository.findById(movieId)

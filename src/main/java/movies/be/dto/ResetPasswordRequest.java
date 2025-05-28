@@ -10,7 +10,7 @@ public class ResetPasswordRequest {
     @NotBlank(message = "Token is required")
     private String token;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters")
-    private String password;
+    @NotBlank(message = "PassWord is required")
+    @Size(min = 6, message = "PassWord must be at least 6 characters")
+    private String passWord;
 }

@@ -16,10 +16,10 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.expiration}")
+    @Value("${jwt.access.expiration}")
     private long expiration;
 
-    @Value("${jwt.reset-password.expiration}")
+    @Value("${jwt.refresh.expiration}")
     private long resetPasswordExpiration;
 
     /**

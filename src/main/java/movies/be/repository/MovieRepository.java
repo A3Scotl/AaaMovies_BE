@@ -21,7 +21,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
     List<Movie> findByCountryId(Long countryId);
 
-    @Query("SELECT DISTINCT m FROM Movie m JOIN m.categories c WHERE c.id = :categoryId")
+    @Query("SELECT DISTINCT m FROM Movie m JOIN m.movieCategories mc WHERE mc.category.id = :categoryId")
     List<Movie> findByCategoryId(Long categoryId);
 
     @Query("SELECT m FROM Movie m LEFT JOIN m.ratings r GROUP BY m.movieId HAVING COUNT(r) > 0 ORDER BY AVG(r.ratingValue) DESC")
